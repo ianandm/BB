@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String?  @unique
+  email     String   @unique
+  name      String?
+  isAdmin   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders    Order[]
+  cartItems CartItem[]
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  image       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  books       Book[]
+}
+
+model Book {
+  id              String      @id @default(cuid())
+  title           String
+  slug            String      @unique
+  author          String
+  description     String
+  price           Decimal     @db.Decimal(10, 2)
+  coverImage      String
+  categoryId      String
+  category        Category    @relation(fields: [categoryId], references: [id])
+  isbn            String?     @unique
+  inventoryCount  Int         @default(0)
+  rating          Float       @default(0)
+  featured        Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  orderItems      OrderItem[]
+  cartItems       CartItem[]
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookId    String
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, bookId])
+}
+
+model Order {
+  id                      String      @id @default(cuid())
+  userId                  String?
+  user                    User?       @relation(fields: [userId], references: [id])
+  status                  OrderStatus @default(PENDING)
+  totalAmount             Decimal     @db.Decimal(10, 2)
+  stripeCheckoutSessionId String?     @unique
+  createdAt               DateTime    @default(now())
+  updatedAt               DateTime    @updatedAt
+  items                   OrderItem[]
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  bookId    String
+  book      Book    @relation(fields: [bookId], references: [id])
+  quantity  Int
+  price     Decimal @db.Decimal(10, 2)
+}

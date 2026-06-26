@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0a0e27;
+  --foreground: #ffffff;
+  --font-heading: var(--font-cormorant);
+  --font-heading-secondary: var(--font-playfair);
+  --font-body: var(--font-inter);
+  --font-nav: var(--font-manrope);
+
+  /* Brand colors from Figma */
+  --color-blue: #3aa7ff;
+  --color-gold: #f5b84b;
+  --color-orange: #f28c28;
+  --color-navy: #0a0e27;
+  --color-navy-mid: #1a1f3a;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-brand-blue: var(--color-blue);
+  --color-brand-gold: var(--color-gold);
+  --color-brand-orange: var(--color-orange);
+  --color-navy: var(--color-navy);
+  --color-navy-mid: var(--color-navy-mid);
+  --font-sans: var(--font-body);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body), system-ui, sans-serif;
+}
+
+.font-heading {
+  font-family: var(--font-heading), Georgia, serif;
+}
+
+.font-heading-secondary {
+  font-family: var(--font-heading-secondary), Georgia, serif;
+}
+
+.font-body {
+  font-family: var(--font-body), system-ui, sans-serif;
+}
+
+.font-nav {
+  font-family: var(--font-nav), system-ui, sans-serif;
+}
