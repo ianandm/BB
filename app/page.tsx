@@ -1,25 +1,25 @@
-import { ArticlesSection } from "@/components/home/ArticlesSection";
-import { CategoriesSection } from "@/components/home/CategoriesSection";
-import { FeaturedBooksSection } from "@/components/home/FeaturedBooksSection";
-import { FeaturedStorySection } from "@/components/home/FeaturedStorySection";
-import { HeroSection } from "@/components/home/HeroSection";
-import { NewsletterSection } from "@/components/home/NewsletterSection";
-import { ReadingPathsSection } from "@/components/home/ReadingPathsSection";
-import { SeekingSection } from "@/components/home/SeekingSection";
-import { TodaysWisdomSection } from "@/components/home/TodaysWisdomSection";
+import { BestPlaceToStart } from "@/components/BestPlaceToStart";
+import { BookCategories } from "@/components/BookCategories";
+import { FeaturedBookStory } from "@/components/FeaturedBookStory";
+import { Hero } from "@/components/Hero";
+import { Newsletter } from "@/components/Newsletter";
+import { ReadingPaths } from "@/components/ReadingPaths";
+import { SeekingSection } from "@/components/SeekingSection";
+import { SpiritualityBlogs } from "@/components/SpiritualityBlogs";
+import { TodaysWisdom } from "@/components/TodaysWisdom";
 
 export default function HomePage() {
   return (
     <>
-      <HeroSection />
+      <Hero />
       <SeekingSection />
-      <ReadingPathsSection />
-      <FeaturedBooksSection />
-      <FeaturedStorySection />
-      <CategoriesSection />
-      <TodaysWisdomSection />
-      <ArticlesSection />
-      <NewsletterSection />
+      <ReadingPaths />
+      <BestPlaceToStart />
+      <FeaturedBookStory />
+      <BookCategories />
+      <TodaysWisdom />
+      <SpiritualityBlogs />
+      <Newsletter />
     </>
   );
 }

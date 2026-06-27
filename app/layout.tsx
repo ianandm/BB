@@ -5,10 +5,10 @@ import {
   Manrope,
   Playfair_Display,
 } from "next/font/google";
-import { Footer } from "@/components/layout/Footer";
-import { Header } from "@/components/layout/Header";
-import { PageBackground } from "@/components/layout/PageBackground";
+import { Footer } from "@/components/Footer";
+import { Header } from "@/components/Header";
 import { CartProvider } from "@/components/cart/CartProvider";
+import { MiniCart } from "@/components/cart/MiniCart";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -54,12 +54,12 @@ export default function RootLayout({
       lang="en"
       className={`${cormorant.variable} ${playfair.variable} ${inter.variable} ${manrope.variable} h-full`}
     >
-      <body className="min-h-full bg-[#0A0E27] font-body text-white antialiased">
+      <body className="min-h-full bg-gradient-to-b from-[#0A0E27] via-[#1A1F3A] to-[#0A0E27] font-body text-white antialiased">
         <CartProvider>
-          <PageBackground />
           <Header />
-          <main className="pt-20">{children}</main>
+          <main>{children}</main>
           <Footer />
+          <MiniCart />
         </CartProvider>
       </body>
     </html>

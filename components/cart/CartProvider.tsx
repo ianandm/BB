@@ -7,96 +7,103 @@ import {
   useEffect,
   useMemo,
   useState,
+  type ReactNode,
 } from "react";
-import type { Book } from "@/lib/data/catalog";
-import { loadCart, saveCart } from "@/lib/cart/storage";
-import type { CartItem } from "@/lib/cart/types";
-import { AddedToLibraryToast } from "@/components/cart/AddedToLibraryToast";
 
-type CartContextValue = {
-  items: CartItem[];
-  itemCount: number;
-  subtotal: number;
-  addItem: (book: Book, quantity?: number) => void;
-  removeItem: (bookId: string) => void;
-  updateQuantity: (bookId: string, quantity: number) => void;
-  clearCart: () => void;
-  isInCart: (bookId: string) => boolean;
+export type CartItem = {
+  id: string;
+  title: string;
+  author: string;
+  price: number;
+  image: string;
+  category: string;
+  quantity: number;
+  format: string;
+  insight?: string;
 };
 
-const CartContext = createContext<CartContextValue | null>(null);
+type CartContextType = {
+  items: CartItem[];
+  addToCart: (item: Omit<CartItem, "quantity">) => void;
+  removeFromCart: (id: string) => void;
+  updateQuantity: (id: string, quantity: number) => void;
+  clearCart: () => void;
+  totalItems: number;
+  totalPrice: number;
+  isCartOpen: boolean;
+  openCart: () => void;
+  closeCart: () => void;
+};
 
-function bookToCartItem(book: Book, quantity: number): CartItem {
-  return {
-    bookId: book.id,
-    slug: book.slug,
-    title: book.title,
-    author: book.author,
-    price: book.price,
-    image: book.image,
-    quantity,
-  };
+const CartContext = createContext<CartContextType | undefined>(undefined);
+const CART_STORAGE_KEY = "bluish-cart";
+
+function loadItems(): CartItem[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(CART_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as CartItem[]) : [];
+  } catch {
+    return [];
+  }
 }
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
+export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
-  const [toastBook, setToastBook] = useState<string | null>(null);
 
   useEffect(() => {
-    setItems(loadCart());
+    setItems(loadItems());
     setHydrated(true);
   }, []);
 
   useEffect(() => {
     if (hydrated) {
-      saveCart(items);
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
     }
   }, [items, hydrated]);
 
-  const addItem = useCallback((book: Book, quantity = 1) => {
-    setItems((current) => {
-      const existing = current.find((item) => item.bookId === book.id);
-      if (existing) {
-        return current.map((item) =>
-          item.bookId === book.id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item,
+  const addToCart = useCallback((item: Omit<CartItem, "quantity">) => {
+    setItems((prevItems) => {
+      const existingItem = prevItems.find((i) => i.id === item.id);
+      if (existingItem) {
+        return prevItems.map((i) =>
+          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i,
         );
       }
-      return [...current, bookToCartItem(book, quantity)];
+      return [...prevItems, { ...item, quantity: 1 }];
     });
-    setToastBook(book.title);
+    setIsCartOpen(true);
   }, []);
 
-  const removeItem = useCallback((bookId: string) => {
-    setItems((current) => current.filter((item) => item.bookId !== bookId));
+  const removeFromCart = useCallback((id: string) => {
+    setItems((prevItems) => prevItems.filter((item) => item.id !== id));
   }, []);
 
-  const updateQuantity = useCallback((bookId: string, quantity: number) => {
-    if (quantity < 1) return;
-    setItems((current) =>
-      current.map((item) =>
-        item.bookId === bookId ? { ...item, quantity } : item,
-      ),
-    );
-  }, []);
-
-  const clearCart = useCallback(() => {
-    setItems([]);
-  }, []);
-
-  const isInCart = useCallback(
-    (bookId: string) => items.some((item) => item.bookId === bookId),
-    [items],
+  const updateQuantity = useCallback(
+    (id: string, quantity: number) => {
+      if (quantity <= 0) {
+        removeFromCart(id);
+        return;
+      }
+      setItems((prevItems) =>
+        prevItems.map((item) => (item.id === id ? { ...item, quantity } : item)),
+      );
+    },
+    [removeFromCart],
   );
 
-  const itemCount = useMemo(
+  const clearCart = useCallback(() => setItems([]), []);
+  const openCart = useCallback(() => setIsCartOpen(true), []);
+  const closeCart = useCallback(() => setIsCartOpen(false), []);
+
+  const totalItems = useMemo(
     () => items.reduce((sum, item) => sum + item.quantity, 0),
     [items],
   );
 
-  const subtotal = useMemo(
+  const totalPrice = useMemo(
     () => items.reduce((sum, item) => sum + item.price * item.quantity, 0),
     [items],
   );
@@ -104,34 +111,32 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo(
     () => ({
       items,
-      itemCount,
-      subtotal,
-      addItem,
-      removeItem,
+      addToCart,
+      removeFromCart,
       updateQuantity,
       clearCart,
-      isInCart,
+      totalItems,
+      totalPrice,
+      isCartOpen,
+      openCart,
+      closeCart,
     }),
     [
       items,
-      itemCount,
-      subtotal,
-      addItem,
-      removeItem,
+      addToCart,
+      removeFromCart,
       updateQuantity,
       clearCart,
-      isInCart,
+      totalItems,
+      totalPrice,
+      isCartOpen,
+      openCart,
+      closeCart,
     ],
   );
 
   return (
-    <CartContext.Provider value={value}>
-      {children}
-      <AddedToLibraryToast
-        bookTitle={toastBook}
-        onDismiss={() => setToastBook(null)}
-      />
-    </CartContext.Provider>
+    <CartContext.Provider value={value}>{children}</CartContext.Provider>
   );
 }
 
