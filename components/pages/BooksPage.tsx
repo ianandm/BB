@@ -5,7 +5,7 @@ import { motion } from 'motion/react';
 import { ShoppingCart, Star, Filter, Search, BookOpen, ArrowRight, Check } from 'lucide-react';
 import { useCart } from '@/components/cart/CartProvider';
 
-const allBooks = [
+const defaultBooks = [
   {
     id: 'bk-1',
     title: 'Bhagavad Gita As It Is',
@@ -204,6 +204,12 @@ const categories = ['All', 'Bhagavad Gita', 'Biography', 'Philosophy', 'Self Mas
 const formats = ['All Formats', 'Hardcover', 'Paperback'];
 const sortOptions = ['Featured', 'Price: Low to High', 'Price: High to Low', 'Most Reviews', 'Highest Rated'];
 
+type BookItem = (typeof defaultBooks)[number];
+
+type BooksPageProps = {
+  books?: BookItem[];
+};
+
 function StarRating({ rating }: { rating: number }) {
   return (
     <div className="flex items-center gap-0.5">
@@ -221,8 +227,9 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-export function BooksPage() {
+export function BooksPage({ books: booksFromDb }: BooksPageProps = {}) {
   const { addToCart, items } = useCart();
+  const allBooks = booksFromDb ?? defaultBooks;
   const [activeCategory, setActiveCategory] = useState('All');
   const [activeFormat, setActiveFormat] = useState('All Formats');
   const [sortBy, setSortBy] = useState('Featured');

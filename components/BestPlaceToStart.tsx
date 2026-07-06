@@ -3,60 +3,98 @@
 import { motion } from 'motion/react';
 import { ShoppingCart, Eye, Sparkles } from 'lucide-react';
 import { useCart } from '@/components/cart/CartProvider';
+import type { CatalogBook } from '@/lib/queries/mappers';
 
-const beginnerBooks = [
+const fallbackBooks: CatalogBook[] = [
   {
     id: 'book-1',
+    slug: 'bhagavad-gita-as-it-is',
     title: 'Bhagavad Gita As It Is',
     author: 'Srila Prabhupada',
+    authors: ['Srila Prabhupada'],
     price: 24.99,
     priceDisplay: '$24.99',
-    description: 'The definitive guide to understanding the Gita\'s timeless wisdom',
+    description: "The definitive guide to understanding the Gita's timeless wisdom",
     image: 'https://images.unsplash.com/photo-1522075782449-e45a34f1ddfb?w=400',
     category: 'Bhagavad Gita',
+    categorySlug: 'bhagavad-gita',
+    categories: [{ name: 'Bhagavad Gita', slug: 'bhagavad-gita' }],
     format: 'Hardcover',
+    rating: 4.9,
+    reviewCount: 2847,
+    featured: true,
+    inStock: true,
     insight: 'Great for beginners',
   },
   {
     id: 'book-2',
+    slug: 'the-journey-home',
     title: 'The Journey Home',
     author: 'Radhanath Swami',
+    authors: ['Radhanath Swami'],
     price: 18.99,
     priceDisplay: '$18.99',
     description: 'An inspiring spiritual autobiography of self-discovery',
     image: 'https://images.unsplash.com/photo-1526779259212-939e64788e3c?w=400',
     category: 'Biography',
+    categorySlug: 'biography',
+    categories: [{ name: 'Biography', slug: 'biography' }],
     format: 'Paperback',
+    rating: 4.8,
+    reviewCount: 1203,
+    featured: true,
+    inStock: true,
     insight: 'Inspiring devotional stories',
   },
   {
     id: 'book-3',
+    slug: 'perfect-questions-perfect-answers',
     title: 'Perfect Questions, Perfect Answers',
     author: 'Srila Prabhupada',
+    authors: ['Srila Prabhupada'],
     price: 12.99,
     priceDisplay: '$12.99',
-    description: 'Essential conversations on life\'s most important questions',
+    description: "Essential conversations on life's most important questions",
     image: 'https://images.unsplash.com/photo-1600618528240-fb9fc964b853?w=400',
     category: 'Philosophy',
+    categorySlug: 'philosophy',
+    categories: [{ name: 'Philosophy', slug: 'philosophy' }],
     format: 'Paperback',
+    rating: 4.7,
+    reviewCount: 934,
+    featured: true,
+    inStock: true,
     insight: 'Perfect for curious minds',
   },
   {
     id: 'book-4',
+    slug: 'the-science-of-self-realization',
     title: 'The Science of Self-Realization',
     author: 'Srila Prabhupada',
+    authors: ['Srila Prabhupada'],
     price: 16.99,
     priceDisplay: '$16.99',
     description: 'Practical insights into spiritual consciousness',
     image: 'https://images.unsplash.com/photo-1526916027372-0c0852cef5d3?w=400',
     category: 'Self Mastery',
+    categorySlug: 'self-mastery',
+    categories: [{ name: 'Self Mastery', slug: 'self-mastery' }],
     format: 'Hardcover',
+    rating: 4.8,
+    reviewCount: 756,
+    featured: true,
+    inStock: true,
     insight: 'Practical daily guidance',
   },
 ];
 
-export function BestPlaceToStart() {
+type BestPlaceToStartProps = {
+  books?: CatalogBook[];
+};
+
+export function BestPlaceToStart({ books = fallbackBooks }: BestPlaceToStartProps) {
   const { addToCart } = useCart();
+  const beginnerBooks = books;
 
   return (
     <section className="relative py-24 overflow-hidden">
@@ -135,7 +173,18 @@ export function BestPlaceToStart() {
                         <Eye className="w-5 h-5 text-white/70 hover:text-white" />
                       </button>
                       <button
-                        onClick={() => addToCart(book)}
+                        onClick={() =>
+                          addToCart({
+                            id: book.id,
+                            title: book.title,
+                            author: book.author,
+                            price: book.price,
+                            image: book.image,
+                            category: book.category,
+                            format: book.format,
+                            insight: book.insight,
+                          })
+                        }
                         className="p-2 rounded-full bg-[#3AA7FF] hover:bg-[#3AA7FF]/80 transition-colors"
                       >
                         <ShoppingCart className="w-5 h-5 text-white" />

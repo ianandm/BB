@@ -2,6 +2,9 @@
 
 import { motion } from 'motion/react';
 import { BookOpen, FileText, Compass, Lightbulb } from 'lucide-react';
+import { seededUnit } from '@/lib/utils';
+
+const PARTICLE_COUNT = 20;
 
 interface CategoryHeroProps {
   title: string;
@@ -32,22 +35,22 @@ export function CategoryHero({ title, description, heroImage, gradient, stats }:
 
       {/* Floating particles */}
       <div className="absolute inset-0">
-        {[...Array(20)].map((_, i) => (
+        {[...Array(PARTICLE_COUNT)].map((_, i) => (
           <motion.div
             key={i}
             className="absolute w-1 h-1 bg-white/30 rounded-full"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
+              left: `${seededUnit(i * 4 + 101) * 100}%`,
+              top: `${seededUnit(i * 4 + 102) * 100}%`,
             }}
             animate={{
               y: [0, -20, 0],
               opacity: [0.2, 0.6, 0.2],
             }}
             transition={{
-              duration: 2 + Math.random() * 2,
+              duration: 2 + seededUnit(i * 4 + 103) * 2,
               repeat: Infinity,
-              delay: Math.random() * 2,
+              delay: seededUnit(i * 4 + 104) * 2,
             }}
           />
         ))}

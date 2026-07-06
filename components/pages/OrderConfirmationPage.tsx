@@ -10,11 +10,12 @@ export function OrderConfirmationPage() {
   const { items, clearCart, totalPrice } = useCart();
   const [orderItems] = useState<CartItem[]>(() => [...items]);
   const [orderTotal] = useState(() => totalPrice);
-  const [orderNumber] = useState(
-    () => 'BB' + Math.random().toString(36).substring(2, 11).toUpperCase(),
-  );
+  const [orderNumber, setOrderNumber] = useState('');
 
   useEffect(() => {
+    setOrderNumber(
+      'BB' + Math.random().toString(36).substring(2, 11).toUpperCase(),
+    );
     clearCart();
   }, [clearCart]);
 
