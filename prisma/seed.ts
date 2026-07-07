@@ -1,5 +1,6 @@
 import "dotenv/config";
 import {
+  BlogStatus,
   BookFormat,
   BookStatus,
   DiscountType,
@@ -352,7 +353,104 @@ async function main() {
     },
   });
 
-  console.log(`Seeded ${books.length} books, ${categoryData.length} categories`);
+  // ─── Blogs ─────────────────────────────────────────────────────────────────
+  const blogData = [
+    {
+      slug: "5-gita-verses-morning-purpose",
+      title: "5 Gita Verses to Start Your Morning With Purpose",
+      excerpt:
+        "The Bhagavad Gita offers more than philosophy — it offers a practical morning orientation. These five verses have changed how thousands of readers begin their day.",
+      category: "Bhagavad Gita",
+      categoryColor: "#3AA7FF",
+      readTime: "8 min read",
+      coverImageUrl:
+        "https://images.unsplash.com/photo-1522075782449-e45a34f1ddfb?w=800&fit=crop",
+      relatedBook: "Bhagavad Gita As It Is",
+      featured: true,
+    },
+    {
+      slug: "ancient-wisdom-modern-stress",
+      title: "How Ancient Wisdom Helps Navigate Modern Stress",
+      excerpt:
+        "Anxiety, overwhelm, and uncertainty aren't new human experiences. The rishis wrote about them thousands of years ago — and left us practical tools.",
+      category: "Emotional Resilience",
+      categoryColor: "#F5B84B",
+      readTime: "6 min read",
+      coverImageUrl:
+        "https://images.unsplash.com/photo-1526779259212-939e64788e3c?w=800&fit=crop",
+      relatedBook: "The Journey Home",
+      featured: false,
+    },
+    {
+      slug: "hanuman-devotion-unwavering-faith",
+      title: "Hanuman's Devotion: Lessons in Unwavering Faith",
+      excerpt:
+        "What does it mean to be completely devoted? Through Hanuman, we see a model of service so pure it transcends ordinary motivation altogether.",
+      category: "Stories",
+      categoryColor: "#F28C28",
+      readTime: "10 min read",
+      coverImageUrl:
+        "https://images.unsplash.com/photo-1600618528240-fb9fc964b853?w=800&fit=crop",
+      relatedBook: "The Ramayana",
+      featured: false,
+    },
+    {
+      slug: "teaching-children-spiritual-values",
+      title: "Teaching Children Spiritual Values Through Stories",
+      excerpt:
+        "Children learn through narrative, not doctrine. Here's how to use the timeless stories of the Vedic tradition to plant seeds that last a lifetime.",
+      category: "Parenting",
+      categoryColor: "#3AA7FF",
+      readTime: "7 min read",
+      coverImageUrl:
+        "https://images.unsplash.com/photo-1526916027372-0c0852cef5d3?w=800&fit=crop",
+      relatedBook: "Krishna Book",
+      featured: false,
+    },
+    {
+      slug: "beginners-guide-srila-prabhupada",
+      title: "A Beginner's Guide to Reading Srila Prabhupada",
+      excerpt:
+        "His books are profound, and the purports can feel dense if you come in unprepared. This guide gives you the context, the pace, and the practice to read them well.",
+      category: "Book Guides",
+      categoryColor: "#F5B84B",
+      readTime: "12 min read",
+      coverImageUrl:
+        "https://images.unsplash.com/photo-1604078893234-ff3a1a5d5292?w=800&fit=crop",
+      relatedBook: "Perfect Questions, Perfect Answers",
+      featured: true,
+    },
+    {
+      slug: "what-is-bhakti-yoga",
+      title: "What is Bhakti Yoga? Your Questions Answered",
+      excerpt:
+        "Is it a religion? A practice? A feeling? We answer the most common questions first-time readers bring to the Bhakti tradition — clearly and without jargon.",
+      category: "Philosophy",
+      categoryColor: "#F28C28",
+      readTime: "9 min read",
+      coverImageUrl:
+        "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&fit=crop",
+      relatedBook: "Science of Self-Realization",
+      featured: false,
+    },
+  ];
+
+  for (const blog of blogData) {
+    await prisma.blog.upsert({
+      where: { slug: blog.slug },
+      update: {},
+      create: {
+        ...blog,
+        body: blog.excerpt,
+        status: BlogStatus.PUBLISHED,
+        publishedAt: new Date(),
+      },
+    });
+  }
+
+  console.log(
+    `Seeded ${books.length} books, ${categoryData.length} categories, ${blogData.length} blogs`,
+  );
   console.log(`Demo customer: demo@bluishboy.com (${demoCustomer.id})`);
   console.log(`Admin user: admin@bluishboy.com (${adminUser.id})`);
 }

@@ -114,9 +114,13 @@ export function Header() {
                 </span>
               )}
             </button>
-            <button className="p-2 hover:bg-white/5 rounded-full transition-colors group hidden sm:block">
+            <Link
+              href="/admin/login"
+              className="p-2 hover:bg-white/5 rounded-full transition-colors group hidden sm:block"
+              title="Admin sign in"
+            >
               <User className="w-6 h-6 text-white/70 group-hover:text-white transition-colors" />
-            </button>
+            </Link>
 
             {/* Mobile menu toggle */}
             <button
@@ -159,6 +163,15 @@ export function Header() {
                 </Link>
               )
             )}
+            <Link
+              href="/admin/login"
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center gap-3 px-4 py-3 rounded-2xl text-white/70 hover:text-white hover:bg-white/5 transition-all"
+              style={{ fontFamily: 'var(--font-nav)' }}
+            >
+              <User className="w-5 h-5" />
+              Sign in
+            </Link>
           </div>
         )}
       </div>
