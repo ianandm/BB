@@ -280,10 +280,10 @@ export function AdminCategoriesManager({
               <div>
                 <label className="mb-1 block text-sm text-white/70">Image URL (optional)</label>
                 <input
-                  type="url"
+                  type="text"
                   value={form.imageUrl}
                   onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-                  placeholder="https://..."
+                  placeholder="https://... or /images/book.jpg"
                   className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-white focus:outline-none"
                 />
               </div>
