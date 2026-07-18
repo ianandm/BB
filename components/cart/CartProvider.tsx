@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -37,6 +38,26 @@ type CartContextType = {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 const CART_STORAGE_KEY = "bluish-cart";
+const SYNC_DEBOUNCE_MS = 800;
+
+/** Only DB-backed books (uuid ids) are synced; static fallback ids like "bk-1" stay local-only. */
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+type ServerCartItem = {
+  id: string;
+  quantity: number;
+  unitPrice: number;
+  book: {
+    id: string;
+    title: string;
+    author: string;
+    image: string;
+    category: string;
+    format: string;
+    insight?: string;
+  };
+};
 
 function loadItems(): CartItem[] {
   if (typeof window === "undefined") return [];
@@ -48,20 +69,101 @@ function loadItems(): CartItem[] {
   }
 }
 
+function mapServerItem(item: ServerCartItem): CartItem {
+  return {
+    id: item.book.id,
+    title: item.book.title,
+    author: item.book.author,
+    price: item.unitPrice,
+    image: item.book.image,
+    category: item.book.category,
+    format: item.book.format,
+    insight: item.book.insight,
+    quantity: item.quantity,
+  };
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+
+  // Server sync bookkeeping. Sync is best-effort: if the API is down the
+  // cart keeps working from localStorage exactly as before.
+  const serverReadyRef = useRef(false);
+  const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setItems(loadItems());
     setHydrated(true);
   }, []);
 
+  // One-time reconcile with the server cart after hydration.
+  // Rule: local wins on conflicts; server-only items are added locally.
   useEffect(() => {
-    if (hydrated) {
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
-    }
+    if (!hydrated) return;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const res = await fetch("/api/cart", { cache: "no-store" });
+        if (!res.ok) throw new Error(`GET /api/cart ${res.status}`);
+        const data = (await res.json()) as {
+          cart: { items: ServerCartItem[] } | null;
+        };
+
+        if (cancelled) return;
+
+        const serverItems = data.cart?.items ?? [];
+        if (serverItems.length > 0) {
+          setItems((prev) => {
+            const localIds = new Set(prev.map((item) => item.id));
+            const additions = serverItems
+              .filter((item) => !localIds.has(item.book.id))
+              .map(mapServerItem);
+            return additions.length > 0 ? [...prev, ...additions] : prev;
+          });
+        }
+      } catch {
+        // Server unavailable — keep working from localStorage.
+      } finally {
+        if (!cancelled) serverReadyRef.current = true;
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrated]);
+
+  // Persist to localStorage (unchanged) and debounce a push to the server.
+  useEffect(() => {
+    if (!hydrated) return;
+
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+
+    if (!serverReadyRef.current) return;
+
+    if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
+    syncTimerRef.current = setTimeout(() => {
+      const payload = {
+        items: items
+          .filter((item) => UUID_RE.test(item.id))
+          .map((item) => ({ bookId: item.id, quantity: item.quantity })),
+      };
+
+      void fetch("/api/cart", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }).catch(() => {
+        // Best-effort sync; localStorage remains the source of truth.
+      });
+    }, SYNC_DEBOUNCE_MS);
+
+    return () => {
+      if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
+    };
   }, [items, hydrated]);
 
   const addToCart = useCallback((item: Omit<CartItem, "quantity">) => {

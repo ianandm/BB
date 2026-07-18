@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  BarChart3,
   BookOpen,
   FolderTree,
   LayoutDashboard,
   LogOut,
   Newspaper,
   Package,
+  Settings,
 } from "lucide-react";
 
 const navItems = [
@@ -17,6 +19,8 @@ const navItems = [
   { href: "/admin/orders", label: "Orders", icon: Package },
   { href: "/admin/blogs", label: "Blogs", icon: Newspaper },
   { href: "/admin/categories", label: "Categories", icon: FolderTree },
+  { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 export function AdminNav() {

@@ -1,10 +1,12 @@
 import Link from "next/link";
 import {
   ArrowRight,
+  BarChart3,
   BookOpen,
   FolderTree,
   Newspaper,
   Package,
+  Settings,
 } from "lucide-react";
 
 const sections = [
@@ -39,6 +41,22 @@ const sections = [
     icon: FolderTree,
     color: "#3AA7FF",
     actions: ["Add category", "Edit", "Hide", "Delete"],
+  },
+  {
+    href: "/admin/analytics",
+    title: "Analytics",
+    description: "See catalog, order, and content stats at a glance",
+    icon: BarChart3,
+    color: "#F5B84B",
+    actions: ["Catalog", "Orders", "Revenue", "Content"],
+  },
+  {
+    href: "/admin/settings",
+    title: "Settings",
+    description: "Review store configuration and environment status",
+    icon: Settings,
+    color: "#F28C28",
+    actions: ["Store info", "Integrations"],
   },
 ];
 
