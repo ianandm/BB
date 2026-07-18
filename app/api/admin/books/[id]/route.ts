@@ -6,6 +6,7 @@ import {
   updateBookForAdmin,
 } from "@/lib/queries/admin-books";
 import { adminBookUpdateSchema } from "@/lib/validations/admin";
+import { revalidateBookPages } from "@/lib/revalidation";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -24,11 +25,13 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (body.action === "hide") {
       const book = await setBookStatusForAdmin(id, BookStatus.ARCHIVED);
+      revalidateBookPages();
       return NextResponse.json({ book });
     }
 
     if (body.action === "show") {
       const book = await setBookStatusForAdmin(id, BookStatus.ACTIVE);
+      revalidateBookPages();
       return NextResponse.json({ book });
     }
 
@@ -38,6 +41,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         return NextResponse.json({ error: "Invalid status" }, { status: 400 });
       }
       const book = await setBookStatusForAdmin(id, parsed.data.status);
+      revalidateBookPages();
       return NextResponse.json({ book });
     }
 
@@ -54,6 +58,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       return NextResponse.json({ error: "Book not found" }, { status: 404 });
     }
 
+    revalidateBookPages();
     return NextResponse.json({ book });
   } catch (error) {
     console.error("Admin update book error:", error);
@@ -66,6 +71,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
   try {
     await deleteBookForAdmin(id);
+    revalidateBookPages();
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Admin delete book error:", error);

@@ -4,6 +4,7 @@ import {
   listAllBooksForAdmin,
 } from "@/lib/queries/admin-books";
 import { adminBookSchema } from "@/lib/validations/admin";
+import { revalidateBookPages } from "@/lib/revalidation";
 
 export const runtime = "nodejs";
 
@@ -30,6 +31,7 @@ export async function POST(request: Request) {
     }
 
     const book = await createBookForAdmin(parsed.data);
+    revalidateBookPages();
     return NextResponse.json({ book }, { status: 201 });
   } catch (error) {
     console.error("Admin create book error:", error);

@@ -3,6 +3,10 @@ import { isDatabaseConnected } from "@/lib/db";
 import { listActiveBooks } from "@/lib/queries/books";
 import type { CatalogBook } from "@/lib/queries/mappers";
 
+// Refresh from the database at most every 5 minutes (safety net;
+// admin mutations also revalidate these pages instantly).
+export const revalidate = 300;
+
 function toBooksPageItem(book: CatalogBook) {
   return {
     id: book.id,

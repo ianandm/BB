@@ -4,6 +4,7 @@ import {
   listCategoriesForAdminPanel,
 } from "@/lib/queries/admin-categories";
 import { adminCategorySchema } from "@/lib/validations/admin";
+import { revalidateBookPages } from "@/lib/revalidation";
 
 export const runtime = "nodejs";
 
@@ -30,6 +31,7 @@ export async function POST(request: Request) {
     }
 
     const category = await createCategoryForAdmin(parsed.data);
+    revalidateBookPages();
     return NextResponse.json({ category }, { status: 201 });
   } catch (error) {
     console.error("Admin create category error:", error);

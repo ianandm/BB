@@ -10,6 +10,10 @@ import { TodaysWisdom } from "@/components/TodaysWisdom";
 import { isDatabaseConnected } from "@/lib/db";
 import { getFeaturedBooks } from "@/lib/queries/books";
 
+// Refresh from the database at most every 5 minutes (safety net;
+// admin mutations also revalidate these pages instantly).
+export const revalidate = 300;
+
 export default async function HomePage() {
   let featuredBooks;
 

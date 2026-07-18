@@ -5,6 +5,7 @@ import {
   updateCategoryForAdmin,
 } from "@/lib/queries/admin-categories";
 import { adminCategorySchema } from "@/lib/validations/admin";
+import { revalidateBookPages } from "@/lib/revalidation";
 
 export const runtime = "nodejs";
 
@@ -18,12 +19,14 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (body.action === "hide") {
       const category = await setCategoryActiveForAdmin(id, false);
-      return NextResponse.json({ category });
+      revalidateBookPages();
+    return NextResponse.json({ category });
     }
 
     if (body.action === "show") {
       const category = await setCategoryActiveForAdmin(id, true);
-      return NextResponse.json({ category });
+      revalidateBookPages();
+    return NextResponse.json({ category });
     }
 
     const parsed = adminCategorySchema.partial().safeParse(body);
@@ -39,6 +42,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       return NextResponse.json({ error: "Category not found" }, { status: 404 });
     }
 
+    revalidateBookPages();
     return NextResponse.json({ category });
   } catch (error) {
     console.error("Admin update category error:", error);
@@ -51,6 +55,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
   try {
     await deleteCategoryForAdmin(id);
+    revalidateBookPages();
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Admin delete category error:", error);
