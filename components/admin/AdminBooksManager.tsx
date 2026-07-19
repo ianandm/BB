@@ -371,10 +371,15 @@ export function AdminBooksManager({
                   required
                   type="text"
                   value={form.coverImageUrl}
-                  onChange={(e) => setForm({ ...form, coverImageUrl: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, coverImageUrl: e.target.value.trim() })
+                  }
                   placeholder="https://... or /images/book.jpg"
                   className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-white focus:outline-none"
                 />
+                {form.coverImageUrl && (
+                  <CoverPreview key={form.coverImageUrl} src={form.coverImageUrl} />
+                )}
               </div>
               <div className="sm:col-span-2">
                 <label className="mb-1 block text-sm text-white/70">Description</label>
@@ -478,6 +483,35 @@ export function AdminBooksManager({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function CoverPreview({ src }: { src: string }) {
+  const [failed, setFailed] = useState(false);
+
+  if (failed) {
+    return (
+      <p className="mt-2 rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-2 text-xs text-red-300">
+        No image found at &ldquo;{src}&rdquo;. Check the exact filename — paths are
+        case-sensitive in production, the folder is /images/ (plural), and the
+        extension must match (.jpg vs .jpeg).
+      </p>
+    );
+  }
+
+  return (
+    <div className="mt-2 flex items-center gap-3">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt="Cover preview"
+        onError={() => setFailed(true)}
+        className="h-20 w-auto rounded-lg border border-white/10 object-cover"
+      />
+      <p className="text-xs text-white/50">
+        Preview — if this looks right, the storefront will show it too.
+      </p>
     </div>
   );
 }
