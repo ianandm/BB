@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
 import { Lock, User, Mail, MapPin, Phone } from 'lucide-react';
 import { useCart } from '@/components/cart/CartProvider';
+import { useClerk, useUser } from '@clerk/nextjs';
 
 type CheckoutMode = 'select' | 'guest' | 'login' | 'signup';
 
@@ -12,6 +13,18 @@ export function CheckoutPage() {
   const { items, totalPrice } = useCart();
   const router = useRouter();
   const [mode, setMode] = useState<CheckoutMode>('select');
+  const { openSignIn, openSignUp } = useClerk();
+  const { isSignedIn, user } = useUser();
+
+  // Signed-in users skip the account prompt and get their email prefilled.
+  useEffect(() => {
+    if (!isSignedIn) return;
+    setMode('guest');
+    const email = user?.primaryEmailAddress?.emailAddress;
+    if (email) {
+      setFormData((prev) => (prev.email ? prev : { ...prev, email }));
+    }
+  }, [isSignedIn, user]);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -105,7 +118,7 @@ export function CheckoutPage() {
 
                 {/* Login */}
                 <div
-                  onClick={() => setMode('login')}
+                  onClick={() => openSignIn()}
                   className="p-8 rounded-3xl backdrop-blur-xl bg-white/5 border border-white/10 hover:border-[#F5B84B]/50 transition-all cursor-pointer group"
                 >
                   <div className="flex items-start justify-between mb-4">
@@ -133,7 +146,7 @@ export function CheckoutPage() {
 
                 {/* Create Account */}
                 <div
-                  onClick={() => setMode('signup')}
+                  onClick={() => openSignUp()}
                   className="p-8 rounded-3xl backdrop-blur-xl bg-white/5 border border-white/10 hover:border-[#F28C28]/50 transition-all cursor-pointer group"
                 >
                   <div className="flex items-start justify-between mb-4">

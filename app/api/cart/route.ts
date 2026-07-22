@@ -6,10 +6,13 @@ import {
 import {
   clearCart,
   findActiveGuestCart,
+  findActiveUserCart,
   getCartWithItems,
   getOrCreateGuestCart,
+  getOrCreateUserCart,
   replaceCartItems,
 } from "@/lib/queries/cart";
+import { getOrCreateLocalUser } from "@/lib/auth/customer";
 import { cartSyncSchema } from "@/lib/validations/cart";
 
 export const runtime = "nodejs";
@@ -21,6 +24,14 @@ export const runtime = "nodejs";
  */
 export async function GET() {
   try {
+    const user = await getOrCreateLocalUser();
+    if (user) {
+      const userCart = await findActiveUserCart(user.id);
+      if (!userCart) return NextResponse.json({ cart: null });
+      const cartWithItems = await getCartWithItems(userCart.id);
+      return NextResponse.json({ cart: cartWithItems });
+    }
+
     const sessionId = await getCartSessionId();
     if (!sessionId) return NextResponse.json({ cart: null });
 
@@ -52,8 +63,10 @@ export async function PUT(request: Request) {
       );
     }
 
-    const sessionId = await getOrCreateCartSessionId();
-    const cart = await getOrCreateGuestCart(sessionId);
+    const user = await getOrCreateLocalUser();
+    const cart = user
+      ? await getOrCreateUserCart(user.id)
+      : await getOrCreateGuestCart(await getOrCreateCartSessionId());
     await replaceCartItems(cart.id, parsed.data.items);
 
     const cartWithItems = await getCartWithItems(cart.id);
@@ -67,11 +80,14 @@ export async function PUT(request: Request) {
 /** DELETE /api/cart — empty the current guest cart. */
 export async function DELETE() {
   try {
-    const sessionId = await getCartSessionId();
-    if (sessionId) {
-      const cart = await findActiveGuestCart(sessionId);
-      if (cart) await clearCart(cart.id);
-    }
+    const user = await getOrCreateLocalUser();
+    const cart = user
+      ? await findActiveUserCart(user.id)
+      : await (async () => {
+          const sessionId = await getCartSessionId();
+          return sessionId ? findActiveGuestCart(sessionId) : null;
+        })();
+    if (cart) await clearCart(cart.id);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("Cart DELETE error:", error);

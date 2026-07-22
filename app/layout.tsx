@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ClerkProvider } from "@clerk/nextjs";
 import {
   Cormorant_Garamond,
   Inter,
@@ -47,6 +48,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
+    <ClerkProvider>
     <html
       lang="en"
       className={`${cormorant.variable} ${playfair.variable} ${inter.variable} ${manrope.variable} h-full`}
@@ -55,5 +57,6 @@ export default function RootLayout({
         <StoreShell>{children}</StoreShell>
       </body>
     </html>
+    </ClerkProvider>
   );
 }

@@ -10,6 +10,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useUser } from "@clerk/nextjs";
 
 export type CartItem = {
   id: string;
@@ -92,6 +93,37 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // cart keeps working from localStorage exactly as before.
   const serverReadyRef = useRef(false);
   const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mergedRef = useRef(false);
+  const { isSignedIn } = useUser();
+
+  // When a Clerk session appears, merge the guest cart into the user cart
+  // once, then adopt any server-side items the user had from before.
+  useEffect(() => {
+    if (!isSignedIn || mergedRef.current) return;
+    mergedRef.current = true;
+
+    (async () => {
+      try {
+        const res = await fetch("/api/cart/merge", { method: "POST" });
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          cart: { items: ServerCartItem[] } | null;
+        };
+        const serverItems = data.cart?.items ?? [];
+        if (serverItems.length > 0) {
+          setItems((prev) => {
+            const localIds = new Set(prev.map((item) => item.id));
+            const additions = serverItems
+              .filter((item) => !localIds.has(item.book.id))
+              .map(mapServerItem);
+            return additions.length > 0 ? [...prev, ...additions] : prev;
+          });
+        }
+      } catch {
+        // Best-effort; guest cart keeps working.
+      }
+    })();
+  }, [isSignedIn]);
 
   useEffect(() => {
     setItems(loadItems());

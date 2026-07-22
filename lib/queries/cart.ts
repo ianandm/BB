@@ -169,3 +169,9 @@ export async function mergeGuestCartIntoUserCart(
 
   return userCart;
 }
+
+export async function findActiveUserCart(userId: string) {
+  return prisma.cart.findFirst({
+    where: { userId, status: "ACTIVE" },
+  });
+}
