@@ -63,7 +63,7 @@ export function Hero() {
             className="text-5xl sm:text-6xl lg:text-7xl mb-6 text-transparent bg-clip-text bg-gradient-to-r from-white via-[#FDF0DC] to-white"
             style={{ fontFamily: 'var(--font-heading)' }}
           >
-            Ancient wisdom for the modern mind.
+            Ancient wisdom and knowledge for the modern mind.
           </h1>
 
           <p
