@@ -42,10 +42,56 @@ export function CheckoutPage() {
 
   if (items.length === 0) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    router.push('/order-review');
+    setSubmitting(true);
+    setFormError(null);
+    setFieldErrors({});
+
+    try {
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          phone: formData.phone,
+          name: formData.name,
+          line1: formData.address,
+          city: formData.city,
+          state: formData.state.trim().toUpperCase(),
+          zip: formData.zip.trim(),
+        }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setFieldErrors(data.details?.fieldErrors ?? {});
+        setFormError(
+          data.details?.fieldErrors
+            ? 'Please fix the highlighted fields below.'
+            : data.error ?? 'Something went wrong. Please try again.',
+        );
+        setSubmitting(false);
+        return;
+      }
+
+      // Hand off to Stripe's hosted payment page.
+      window.location.href = data.url;
+    } catch {
+      setFormError('Unable to reach the server. Please try again.');
+      setSubmitting(false);
+    }
   };
+
+  const fieldError = (key: string) => fieldErrors[key]?.[0];
+  const clientFieldMap: Record<string, string> = {
+    line1: 'address',
+  };
+  void clientFieldMap;
 
   return (
     <div className="pt-32 pb-24 min-h-screen">
@@ -350,13 +396,31 @@ export function CheckoutPage() {
                   </p>
                 </div>
 
+                {/* Errors */}
+                {formError && (
+                  <div className="rounded-2xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-300">
+                    {formError}
+                    {Object.keys(fieldErrors).length > 0 && (
+                      <ul className="mt-2 list-inside space-y-1">
+                        {['email', 'phone', 'name', 'line1', 'city', 'state', 'zip'].map(
+                          (key) =>
+                            fieldError(key) ? (
+                              <li key={key}>• {fieldError(key)}</li>
+                            ) : null,
+                        )}
+                      </ul>
+                    )}
+                  </div>
+                )}
+
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  className="w-full px-6 py-4 bg-gradient-to-r from-[#3AA7FF] to-[#3AA7FF]/80 rounded-full hover:shadow-lg hover:shadow-[#3AA7FF]/20 transition-all"
+                  disabled={submitting}
+                  className="w-full px-6 py-4 bg-gradient-to-r from-[#3AA7FF] to-[#3AA7FF]/80 rounded-full hover:shadow-lg hover:shadow-[#3AA7FF]/20 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   <span className="text-white font-medium" style={{ fontFamily: 'var(--font-nav)' }}>
-                    Continue to Review
+                    {submitting ? 'Redirecting to secure payment…' : 'Continue to Payment'}
                   </span>
                 </button>
               </motion.form>
