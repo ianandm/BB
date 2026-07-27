@@ -47,7 +47,7 @@ export function Header() {
           {/* Logo */}
           <Link href="/" className="flex-shrink-0">
             <h1
-              className="text-2xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-[#3AA7FF] to-[#F5B84B] cursor-pointer hover:opacity-80 transition-opacity"
+              className="text-3xl sm:text-4xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-[#3AA7FF] to-[#F5B84B] cursor-pointer hover:opacity-80 transition-opacity drop-shadow-[0_0_18px_rgba(58,167,255,0.35)]"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
               BluishBoy
