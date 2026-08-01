@@ -14,6 +14,7 @@ import { useUser } from "@clerk/nextjs";
 
 export type CartItem = {
   id: string;
+  slug?: string;
   title: string;
   author: string;
   price: number;
@@ -42,9 +43,25 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 const CART_STORAGE_KEY = "bluish-cart";
 const SYNC_DEBOUNCE_MS = 800;
 
-/** Only DB-backed books (uuid ids) are synced; static fallback ids like "bk-1" stay local-only. */
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Items are identified to the server by database id when we have one, and by
+ * slug otherwise (books added from statically-rendered pages carry a slug but
+ * a placeholder id). Items with neither cannot be synced and are skipped.
+ */
+function toSyncPayload(items: CartItem[]) {
+  return {
+    items: items
+      .map((item) => ({
+        bookId: UUID_RE.test(item.id) ? item.id : undefined,
+        slug: item.slug,
+        quantity: item.quantity,
+      }))
+      .filter((item) => Boolean(item.bookId || item.slug)),
+  };
+}
 
 type ServerCartItem = {
   id: string;
@@ -52,6 +69,7 @@ type ServerCartItem = {
   unitPrice: number;
   book: {
     id: string;
+    slug?: string;
     title: string;
     author: string;
     image: string;
@@ -74,6 +92,7 @@ function loadItems(): CartItem[] {
 function mapServerItem(item: ServerCartItem): CartItem {
   return {
     id: item.book.id,
+    slug: item.book.slug,
     title: item.book.title,
     author: item.book.author,
     price: item.unitPrice,
@@ -183,11 +202,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     // sync and leave the server cart stuck on an early snapshot.
     if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
     syncTimerRef.current = setTimeout(() => {
-      const payload = {
-        items: items
-          .filter((item) => UUID_RE.test(item.id))
-          .map((item) => ({ bookId: item.id, quantity: item.quantity })),
-      };
+      const payload = toSyncPayload(items);
 
       void fetch("/api/cart", {
         method: "PUT",
@@ -245,11 +260,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       await fetch("/api/cart", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          items: items
-            .filter((item) => UUID_RE.test(item.id))
-            .map((item) => ({ bookId: item.id, quantity: item.quantity })),
-        }),
+        body: JSON.stringify(toSyncPayload(items)),
       });
     } catch {
       // Checkout will surface any resulting mismatch.

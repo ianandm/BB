@@ -176,6 +176,7 @@ export function BestPlaceToStart({ books = fallbackBooks }: BestPlaceToStartProp
                         onClick={() =>
                           addToCart({
                             id: book.id,
+                            slug: book.slug,
                             title: book.title,
                             author: book.author,
                             price: book.price,
