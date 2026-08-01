@@ -8,6 +8,9 @@ export const metadata = {
   title: "Manage Books",
 };
 
+// Admin data must always reflect the live database.
+export const dynamic = "force-dynamic";
+
 export default async function AdminBooksPage() {
   const [books, categories] = await Promise.all([
     listAllBooksForAdmin(),
