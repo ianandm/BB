@@ -1,34 +1,51 @@
 "use client";
 
 import { X, Minus, Plus, ShoppingBag, ArrowRight } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/components/cart/CartProvider';
 
-const recommendedBooks = [
-  {
-    id: 'rec-1',
-    title: 'Journey of Self Discovery',
-    author: 'Srila Prabhupada',
-    price: 16.99,
-    image: 'https://images.unsplash.com/photo-1526779259212-939e64788e3c?w=400',
-    category: 'Self Mastery',
-    format: 'Hardcover',
-    why: 'Perfect companion to the Bhagavad Gita',
-  },
-  {
-    id: 'rec-2',
-    title: 'Perfect Questions, Perfect Answers',
-    author: 'Srila Prabhupada',
-    price: 12.99,
-    image: 'https://images.unsplash.com/photo-1600618528240-fb9fc964b853?w=400',
-    category: 'Philosophy',
-    format: 'Paperback',
-    why: 'Great for understanding spiritual concepts',
-  },
-];
+type RecommendedBook = {
+  id: string;
+  slug: string;
+  title: string;
+  author: string;
+  price: number;
+  image: string;
+  category: string;
+  format: string;
+  description?: string;
+};
+
 
 export function MiniCart() {
+  const [recommendedBooks, setRecommendedBooks] = useState<RecommendedBook[]>([]);
+
+  // Real catalog books, so anything added here can actually be purchased.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/books?featured=true&limit=6", {
+          cache: "no-store",
+        });
+        if (!res.ok) return;
+        const data = (await res.json()) as { books: RecommendedBook[] };
+        if (!cancelled) setRecommendedBooks(data.books ?? []);
+      } catch {
+        // Recommendations are optional — the cart works without them.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const { items, isCartOpen, closeCart, updateQuantity, addToCart } = useCart();
+
+  const suggestions = recommendedBooks
+    .filter((book) => !items.some((item) => item.id === book.id))
+    .slice(0, 2);
 
   return (
     <>
@@ -122,6 +139,7 @@ export function MiniCart() {
                 ))}
 
                 {/* Recommendations */}
+                {suggestions.length > 0 && (
                 <div className="pt-6 border-t border-white/10">
                   <h3
                     className="text-white text-lg mb-4"
@@ -130,7 +148,7 @@ export function MiniCart() {
                     You May Also Enjoy
                   </h3>
                   <div className="space-y-4">
-                    {recommendedBooks.slice(0, 2).map((book) => (
+                    {suggestions.map((book) => (
                       <div
                         key={book.id}
                         className="flex gap-3 p-3 rounded-xl bg-white/5 border border-white/10 hover:border-[#3AA7FF]/30 transition-all group"
@@ -145,14 +163,23 @@ export function MiniCart() {
                             {book.title}
                           </h4>
                           <p className="text-white/60 text-xs mb-1" style={{ fontFamily: 'var(--font-body)' }}>
-                            {book.why}
+                            {book.description ?? book.category}
                           </p>
                           <div className="flex items-center justify-between">
                             <span className="text-white text-sm" style={{ fontFamily: 'var(--font-nav)' }}>
                               ${book.price}
                             </span>
                             <button
-                              onClick={() => addToCart({ ...book, insight: book.why })}
+                              onClick={() => addToCart({
+                                id: book.id,
+                                slug: book.slug,
+                                title: book.title,
+                                author: book.author,
+                                price: book.price,
+                                image: book.image,
+                                category: book.category,
+                                format: book.format,
+                              })}
                               className="px-3 py-1 rounded-full bg-[#3AA7FF]/20 text-[#3AA7FF] text-xs hover:bg-[#3AA7FF]/30 transition-colors"
                             >
                               Add
@@ -163,6 +190,7 @@ export function MiniCart() {
                     ))}
                   </div>
                 </div>
+                )}
               </>
             )}
           </div>
