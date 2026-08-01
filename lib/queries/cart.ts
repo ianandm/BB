@@ -100,52 +100,18 @@ export async function findActiveGuestCart(guestSessionId: string) {
  */
 export async function replaceCartItems(
   cartId: string,
-  items: { bookId?: string; slug?: string; quantity: number }[],
+  items: { bookId: string; quantity: number }[],
 ) {
-  const ids = items.map((i) => i.bookId).filter((v): v is string => Boolean(v));
-  const slugs = items.map((i) => i.slug).filter((v): v is string => Boolean(v));
+  const bookIds = items.map((item) => item.bookId);
+  const books = bookIds.length
+    ? await prisma.book.findMany({
+        where: { id: { in: bookIds }, status: "ACTIVE" },
+        select: { id: true, price: true },
+      })
+    : [];
 
-  const books =
-    ids.length || slugs.length
-      ? await prisma.book.findMany({
-          where: {
-            status: "ACTIVE",
-            OR: [
-              ...(ids.length ? [{ id: { in: ids } }] : []),
-              ...(slugs.length ? [{ slug: { in: slugs } }] : []),
-            ],
-          },
-          select: { id: true, slug: true, price: true },
-        })
-      : [];
-
-  const byId = new Map(books.map((b) => [b.id, b]));
-  const bySlug = new Map(books.map((b) => [b.slug, b]));
-
-  // Resolve each client item to a real book, merging duplicates that resolve
-  // to the same book (added by id on one page, by slug on another).
-  const resolved = new Map<
-    string,
-    { bookId: string; unitPrice: number; quantity: number }
-  >();
-  for (const item of items) {
-    const book =
-      (item.bookId ? byId.get(item.bookId) : undefined) ??
-      (item.slug ? bySlug.get(item.slug) : undefined);
-    if (!book) continue;
-    const existing = resolved.get(book.id);
-    if (existing) {
-      existing.quantity += item.quantity;
-    } else {
-      resolved.set(book.id, {
-        bookId: book.id,
-        unitPrice: book.price,
-        quantity: item.quantity,
-      });
-    }
-  }
-
-  const validItems = [...resolved.values()];
+  const priceById = new Map(books.map((book) => [book.id, book.price]));
+  const validItems = items.filter((item) => priceById.has(item.bookId));
 
   await prisma.$transaction([
     prisma.cartItem.deleteMany({ where: { cartId } }),
@@ -156,14 +122,12 @@ export async function replaceCartItems(
               cartId,
               bookId: item.bookId,
               quantity: item.quantity,
-              unitPrice: item.unitPrice,
+              unitPrice: priceById.get(item.bookId)!,
             })),
           }),
         ]
       : []),
   ]);
-
-  return validItems.length;
 }
 
 export async function clearCart(cartId: string) {
