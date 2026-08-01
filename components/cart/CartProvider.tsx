@@ -30,6 +30,7 @@ type CartContextType = {
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
+  syncNow: () => Promise<void>;
   totalItems: number;
   totalPrice: number;
   isCartOpen: boolean;
@@ -176,6 +177,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     if (!serverReadyRef.current) return;
 
+    // Debounce: replace any pending push with one carrying the latest items.
+    // NOTE: the timer is deliberately NOT cleared in this effect's cleanup —
+    // cleanup runs on every items change, which would cancel each scheduled
+    // sync and leave the server cart stuck on an early snapshot.
     if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
     syncTimerRef.current = setTimeout(() => {
       const payload = {
@@ -192,11 +197,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
         // Best-effort sync; localStorage remains the source of truth.
       });
     }, SYNC_DEBOUNCE_MS);
+  }, [items, hydrated]);
 
+  // Cancel any pending sync only when the provider itself unmounts.
+  useEffect(() => {
     return () => {
       if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
     };
-  }, [items, hydrated]);
+  }, []);
 
   const addToCart = useCallback((item: Omit<CartItem, "quantity">) => {
     setItems((prevItems) => {
@@ -229,6 +237,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
   );
 
   const clearCart = useCallback(() => setItems([]), []);
+
+  /** Push the cart to the server immediately, bypassing the debounce. */
+  const syncNow = useCallback(async () => {
+    if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
+    try {
+      await fetch("/api/cart", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: items
+            .filter((item) => UUID_RE.test(item.id))
+            .map((item) => ({ bookId: item.id, quantity: item.quantity })),
+        }),
+      });
+    } catch {
+      // Checkout will surface any resulting mismatch.
+    }
+  }, [items]);
   const openCart = useCallback(() => setIsCartOpen(true), []);
   const closeCart = useCallback(() => setIsCartOpen(false), []);
 
@@ -249,6 +275,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       removeFromCart,
       updateQuantity,
       clearCart,
+      syncNow,
       totalItems,
       totalPrice,
       isCartOpen,
@@ -261,6 +288,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       removeFromCart,
       updateQuantity,
       clearCart,
+      syncNow,
       totalItems,
       totalPrice,
       isCartOpen,

@@ -10,7 +10,7 @@ import { useClerk, useUser } from '@clerk/nextjs';
 type CheckoutMode = 'select' | 'guest' | 'login' | 'signup';
 
 export function CheckoutPage() {
-  const { items, totalPrice } = useCart();
+  const { items, totalPrice, syncNow } = useCart();
   const router = useRouter();
   const [mode, setMode] = useState<CheckoutMode>('select');
   const { openSignIn, openSignUp } = useClerk();
@@ -53,6 +53,10 @@ export function CheckoutPage() {
     setFieldErrors({});
 
     try {
+      // Make sure the server cart reflects the latest client cart
+      // before the session is built from it.
+      await syncNow();
+
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
